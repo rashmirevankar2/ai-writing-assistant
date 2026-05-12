@@ -23,12 +23,17 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      'https://models.inference.ai.azure.com/chat/completions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt + '\n\n---\n\n' + text }] }]
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt + '\n\n---\n\n' + text }],
+          max_tokens: 1000
         }),
       }
     );
@@ -36,7 +41,7 @@ export default async function handler(req, res) {
     const data = await response.json();
     if (!response.ok) return res.status(response.status).json({ error: data.error?.message || 'API error' });
 
-    const result = data.candidates[0].content.parts[0].text;
+    const result = data.choices[0].message.content;
     res.status(200).json({ result });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
